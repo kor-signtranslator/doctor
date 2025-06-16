@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>수어 인식</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    #loader {
+      position: fixed;
+      z-index: 9999;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2em;
+      color: #333;
+    }
+    .output-area {
+      font-size: 1.2em;
+      padding: 10px;
+      border: 1px solid #ccc;
+      min-height: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div id="loader">Loading...</div>
+  <div id="main-content" style="display:none;">
+    <a href="{{ url_for('index') }}" class="home-link">
+      <img src="{{ url_for('static', filename='images/homeicon.svg') }}" alt="홈으로" class="home-icon" />
+    </a>
+    <div class="camera-container">
+      <div class="camera-box">
+        <img id="video" src="http://127.0.0.1:8000/video_feed" alt="영상 스트림">
+      </div>
+      <div class="text-box">
+        <h2>텍스트 출력 화면</h2>
+        <div id="text-output" class="output-area" style="font-size: 4em;"></div>
+        <div class="button-row">
+          <button id="reset-btn">내용 초기화</button>
+          <button id="gen-sentence-btn">문장 생성</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      setTimeout(() => {
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("main-content").style.display = "block";
+      }, 2000);
+    });
+    
+    document.getElementById("reset-btn").addEventListener("click", () => {
+      fetch("http://127.0.0.1:8000/clear_words")
+        .then(response => response.json())
+        .then(data => {
+          console.log("clear_words 응답:", data);
+          document.getElementById("text-output").innerText = "";
+        })
+        .catch(err => console.error("내용 초기화 오류:", err));
+    });
+    
+    document.getElementById("gen-sentence-btn").addEventListener("click", () => {
+      fetch("http://127.0.0.1:8000/gen_sentence")
+        .then(response => response.json())
+        .then(data => {
+          console.log("gen_sentence 응답:", data);
+          document.getElementById("text-output").innerText = data.sentence;
+        })
+        .catch(err => console.error("문장 생성 오류:", err));
+    });
+    
+    setInterval(() => {
+      fetch("http://127.0.0.1:8000/keywords")
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log("keywords 응답:", data);
+          if (data && data.keywords !== undefined) {
+            document.getElementById("text-output").innerText = data.keywords;
+          }
+        })
+        .catch(err => console.error("예측 단어 가져오기 오류:", err));
+    }, 1000);
+  </script>
+</body>
+</html>

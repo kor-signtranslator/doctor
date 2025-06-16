@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+torch
+mediapipe
+numpy
+requests
